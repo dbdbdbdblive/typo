@@ -41,6 +41,11 @@ Given /^I am logged in as a[n]? (admin|contributor|publisher) user$/ do |profile
   _login(login=_user[:login], pw=_user[:password])
 end
 
+When /^(?:|I )fill in "(.+)" with the ID of ([^"]*)$/ do |field, article_title|
+  article = Article.find_by_title(article_title)
+  fill_in(field, :with => article.id)
+end
+
 #DB Helpers
 def _get_users(profile_types)
   users = []

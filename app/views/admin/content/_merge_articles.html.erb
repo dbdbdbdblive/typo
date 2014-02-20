@@ -5,7 +5,7 @@
 
     <%= form_tag(form_action, :id => "merge_with_form", :enctype => "multipart/form-data") do %>
         <label for='merge_with'> <%= _("Article ID: ") %> </label>
-        <%= text_field 'merge_with', {:style => 'width: 100%'} %>
+        <%= text_field :merge, :with, :style => "width: 20%" %>
         <%= submit_tag _("Merge") %>
     <% end %>
 

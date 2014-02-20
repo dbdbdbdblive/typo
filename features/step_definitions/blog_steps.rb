@@ -31,7 +31,8 @@ end
 
 Given /^the following articles exist:$/ do |articles_table|
   articles_table.hashes.each do |article|
-    Article.create!(:type=>article['type'],:user_id=>User.find_by_name(article['user_name']), :title=>article['title'], :body=>article['body'], :state=>article['state'])  
+    user = User.find_by_name(article['user_name'])
+    Article.create!(:type=>article['type'], :author=>user.name, :user_id=>user.id, :title=>article['title'], :body=>article['body'], :state=>article['state'])  
   end
 end
 
@@ -52,7 +53,7 @@ def _get_users(profile_types)
     user[:password] = "#{user_sn}_pw"
     user[:email] = "#{user_sn}@#{profile_type}\.com"
     user[:profile] = Profile.find_by_label(profile_type)
-    user[:name] = "#{user_sn}_name"
+    user[:name] = "#{user_sn}"
     user[:state] = "active"
     users.push(user)
   end

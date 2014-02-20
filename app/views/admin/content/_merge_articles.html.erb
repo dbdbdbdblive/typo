@@ -1,0 +1,13 @@
+<!-- DB BEGIN Merge Articles -->
+  <div class='merge_articles'>
+    <!-- TODO: only display on edit of existing article - not on form of new article -->
+    <h4><%= _("Merge Articles") %></h4>
+
+    <%= form_tag(form_action, :id => "merge_with_form", :enctype => "multipart/form-data") do %>
+        <label for='merge_with'> <%= _("Article ID: ") %> </label>
+        <%= text_field 'merge_with', {:style => 'width: 100%'} %>
+        <%= submit_tag _("Merge") %>
+    <% end %>
+
+  </div> <!-- Merge Articles -->
+<!-- DB END -->   

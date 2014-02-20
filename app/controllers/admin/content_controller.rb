@@ -34,7 +34,7 @@ class Admin::ContentController < Admin::BaseController
       flash[:error] = _("Error, you are not allowed to perform this action")
       return
     end
-    new_or_edit
+    new_or_edit(allow_merge = current_user.admin?)
   end
 
   def destroy
@@ -139,7 +139,7 @@ class Admin::ContentController < Admin::BaseController
 
   def real_action_for(action); { 'add' => :<<, 'remove' => :delete}[action]; end
 
-  def new_or_edit
+  def new_or_edit(allow_merge = false)
     id = params[:id]
     id = params[:article][:id] if params[:article] && params[:article][:id]
     @article = Article.get_or_build_article(id)
@@ -180,6 +180,7 @@ class Admin::ContentController < Admin::BaseController
     @images = Resource.images_by_created_at.page(params[:page]).per(10)
     @resources = Resource.without_images_by_filename
     @macros = TextFilter.macro_filters
+    @allow_merge = allow_merge
     render 'new'
   end
 

@@ -547,21 +547,24 @@ describe Admin::ContentController do
 
       describe 'merge action' do
         before do
-          @article2 = Factory(:article, :user => @user)
-          @article2.body = "Body2, to be merged with Body1"
+          @article2 = Factory(:article, :user => @user, :body => "This is the body of article2")
         end
 
         describe 'sad paths' do
-          xit 'should redirect to articles index with flash if either article does not exist' do
-
+          it 'should redirect to articles index with flash if either article does not exist' do
+            post :merge, 'id' => @article.id, 'merge_with' => 99
+            flash[:error].should include("Error, you are not allowed to perform this action")
+            response.should redirect_to(:action => 'index')
           end
         end
+
         describe 'happy paths' do
           render_views false
           it 'should confirm the user and both articles are valid to merge' do
             User.any_instance.stub(:admin?).and_return(true)
             User.any_instance.should_receive(:admin?)
             Article.any_instance.stub(:access_by?).and_return(true)
+            Article.any_instance.stub(:merge_with)
             #Article.any_instance.should_receive(:access_by?).exactly(2).times
             #Article.any_instance.should_receive(:access_by?)
             #@article.should_receive(:access_by?).with(@user)
@@ -571,9 +574,20 @@ describe Admin::ContentController do
               flash[:error].should_not include("Error, you are not allowed to perform this action")
             end
           end
-          xit 'should create an article with the merged body of both original articles' do
 
+          it 'should call the model to merge the bodies of the two both original articles' do
+            #setup            
+            merged_body = @article.body + @article2.body
+            Article.any_instance.stub(:merge_with).with(@article2).and_return(Factory(:article, :body => merged_body))
+            #expectation
+            Article.any_instance.should_receive(:merge_with)
+            #invoke controller method
+            post :merge, 'id' => @article.id, 'merge_with' => @article2.id
+            #expectations
+            assigns(:merged_article).body.should == merged_body
+            
           end
+
           xit 'should redirect to articles index after merge' do
 
           end

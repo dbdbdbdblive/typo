@@ -37,6 +37,18 @@ class Admin::ContentController < Admin::BaseController
     new_or_edit(allow_merge = current_user.admin?)
   end
 
+  def merge
+    @article1 = Article.find(params[:id])
+    @article2 = Article.find(params[:merge_with])
+    unless current_user.admin? and (@article1.access_by? current_user) and (@article2.access_by? current_user)
+      flash[:error] = _("Error, you are not allowed to perform this action")
+      redirect_to :action => 'index'
+      return
+    end
+    flash[:notice] =_("The articles were merged into a new article")
+    redirect_to :action => 'index'
+  end
+
   def destroy
     @record = Article.find(params[:id])
 
@@ -190,6 +202,9 @@ class Admin::ContentController < Admin::BaseController
       flash[:notice] = _('Article was successfully created')
     when 'edit'
       flash[:notice] = _('Article was successfully updated.')
+#TODO: set the merge flash *AFTER* spec is written (good TDD)
+#    when 'merge'
+#      flash[:notice] = _('Article was successfully merged.')
     else
       raise "I don't know how to tidy up action: #{params[:action]}"
     end

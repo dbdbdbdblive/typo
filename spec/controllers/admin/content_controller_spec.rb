@@ -544,7 +544,45 @@ describe Admin::ContentController do
         Article.should_not be_exists({:id => draft.id})
         Article.should_not be_exists({:id => draft_2.id})
       end
-    end
+
+      describe 'merge action' do
+        before do
+          @article2 = Factory(:article, :user => @user)
+          @article2.body = "Body2, to be merged with Body1"
+        end
+
+        describe 'sad paths' do
+          xit 'should redirect to articles index with flash if either article does not exist' do
+
+          end
+        end
+        describe 'happy paths' do
+          render_views false
+          it 'should confirm the user and both articles are valid to merge' do
+            User.any_instance.stub(:admin?).and_return(true)
+            User.any_instance.should_receive(:admin?)
+            Article.any_instance.stub(:access_by?).and_return(true)
+            #Article.any_instance.should_receive(:access_by?).exactly(2).times
+            #Article.any_instance.should_receive(:access_by?)
+            #@article.should_receive(:access_by?).with(@user)
+
+            post :merge, 'id' => @article.id, 'merge_with' => @article2.id
+            if flash[:error] then
+              flash[:error].should_not include("Error, you are not allowed to perform this action")
+            end
+          end
+          xit 'should create an article with the merged body of both original articles' do
+
+          end
+          xit 'should redirect to articles index after merge' do
+
+          end
+          xit 'should merge articles by merge action' do
+
+          end
+        end
+      end #merge action
+    end #edit action (admin connection)
 
     describe 'resource_add action' do
 
@@ -657,7 +695,19 @@ describe Admin::ContentController do
           ActionMailer::Base.perform_deliveries = false
         end
       end
-    end
+
+      describe 'merge action' do
+        before :each do
+          @article2 = Factory(:article, :user => @user)
+          @article2.body = "Body2, to be merged with Body1"
+        end
+        it 'should not merge since user is not admin' do
+          post :merge, 'id' => @article.id, 'merge_with' => @article2.id
+          flash[:error].should include("Error, you are not allowed to perform this action")
+          response.should redirect_to(:action => 'index')
+        end
+      end
+    end #publisher connection, edit action
 
     describe 'destroy action can be access' do
 

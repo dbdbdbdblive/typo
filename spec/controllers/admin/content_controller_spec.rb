@@ -552,7 +552,12 @@ describe Admin::ContentController do
 
         describe 'sad paths' do
           it 'should redirect to articles index with flash if either article does not exist' do
-            post :merge, 'id' => @article.id, 'merge_with' => 99
+            post :merge, 'id' => @article.id, :merge => {:with => 99}
+            flash[:error].should include("Error, you are not allowed to perform this action")
+            response.should redirect_to(:action => 'index')
+          end
+          it 'should redirect to articles index with flash if the articles are the same' do
+            post :merge, 'id' => @article.id, :merge => {:with => @article.id}
             flash[:error].should include("Error, you are not allowed to perform this action")
             response.should redirect_to(:action => 'index')
           end
@@ -560,39 +565,49 @@ describe Admin::ContentController do
 
         describe 'happy paths' do
           render_views false
-          it 'should confirm the user and both articles are valid to merge' do
+
+          before do
+            #setup
             User.any_instance.stub(:admin?).and_return(true)
-            User.any_instance.should_receive(:admin?)
             Article.any_instance.stub(:access_by?).and_return(true)
-            Article.any_instance.stub(:merge_with)
+            @merged_body = @article.body + @article2.body
+            @merged_comments = @article.comments + @article2.comments
+            #Article.stub.(:merge).with(@article.id, @article2.id).and_return(Factory(:article, :body => @merged_body), :comments => @merged_comments)
+            Article.stub(:merge_articles).and_return(Factory(:article, :body => @merged_body), :comments => @merged_comments)
+            Article.any_instance.stub(:save).and_return(true)
+          end
+
+          it 'should confirm the user and both articles are valid to merge' do
+            #expectation
+            User.any_instance.should_receive(:admin?)
             #Article.any_instance.should_receive(:access_by?).exactly(2).times
             #Article.any_instance.should_receive(:access_by?)
             #@article.should_receive(:access_by?).with(@user)
-
-            post :merge, 'id' => @article.id, 'merge_with' => @article2.id
+            #invoke controller method
+            post :merge, 'id' => @article.id, :merge => {:with => @article2.id}
             if flash[:error] then
               flash[:error].should_not include("Error, you are not allowed to perform this action")
             end
           end
 
-          it 'should call the model to merge the bodies of the two both original articles' do
-            #setup            
-            merged_body = @article.body + @article2.body
-            Article.any_instance.stub(:merge_with).with(@article2).and_return(Factory(:article, :body => merged_body))
+          it 'should call merge_with, and redirect to index with a flash notice' do         
             #expectation
-            Article.any_instance.should_receive(:merge_with)
+            Article.should_receive(:merge_articles).with(@article.id, @article2.id)
             #invoke controller method
-            post :merge, 'id' => @article.id, 'merge_with' => @article2.id
+            post :merge, 'id' => @article.id, :merge => {:with => @article2.id}  
             #expectations
-            assigns(:merged_article).body.should == merged_body
-            
+            response.should redirect_to(:action => 'index')
+            flash[:notice].should include _("The articles were merged into a new article")
           end
 
-          xit 'should redirect to articles index after merge' do
-
-          end
-          xit 'should merge articles by merge action' do
-
+          it 'should destroy the original articles after the merged article is saved' do         
+            #expectation
+            Article.should_receive(:destroy).with([@article.id, @article2.id])
+            #invoke controller method
+            post :merge, 'id' => @article.id, :merge => {:with => @article2.id}  
+            #expectations
+            response.should redirect_to(:action => 'index')
+            flash[:notice].should include _("The articles were merged into a new article")
           end
         end
       end #merge action
@@ -716,7 +731,7 @@ describe Admin::ContentController do
           @article2.body = "Body2, to be merged with Body1"
         end
         it 'should not merge since user is not admin' do
-          post :merge, 'id' => @article.id, 'merge_with' => @article2.id
+          post :merge, 'id' => @article.id, :merge => {:with => @article2.id}
           flash[:error].should include("Error, you are not allowed to perform this action")
           response.should redirect_to(:action => 'index')
         end

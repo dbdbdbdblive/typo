@@ -39,14 +39,21 @@ class Admin::ContentController < Admin::BaseController
 
   def merge
     @article1 = Article.find_by_id(params[:id])
-    @article2 = Article.find_by_id(params[:merge_with])
-    unless current_user.admin? and (@article1 and @article1.access_by?(current_user)) and (@article2 and @article2.access_by?(current_user))
+    @article2 = Article.find_by_id(params[:merge][:with])
+
+    unless current_user.admin? and (@article1 and @article1.access_by?(current_user)) and (@article2 and @article2.access_by?(current_user) and @article1.id != @article2.id)
       flash[:error] = _("Error, you are not allowed to perform this action")
       redirect_to :action => 'index'
       return
     end
-    @merged_article = @article1.merge_with(@article2)
-    flash[:notice] =_("The articles were merged into a new article")
+    merged_article = Article.merge_articles(@article1.id, @article2.id)
+
+    if merged_article.save
+      Article.destroy([@article1.id, @article2.id])
+      flash[:notice] =_("The articles were merged into a new article")
+    else
+      flash[:error] = _("Error, the action failed.")
+    end
     redirect_to :action => 'index'
   end
 

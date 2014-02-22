@@ -630,5 +630,56 @@ describe Article do
     end
 
   end
+
+#Merge articles
+  describe "merge_with" do
+    before do
+      user_admin = Factory.create(:user, :profile => Factory.build(:profile_admin, :label => Profile::ADMIN))
+      @articles = []
+      (1..2).each do |n|
+        article = Article.get_or_build_article
+        article.title = "Title#{n}"
+        article.body = "This is the body of article#{n}"
+        article.user = user_admin
+        article.author = user_admin.login
+        (0..n).each do
+          Factory(:comment, :article => article)
+        end
+        article.save
+        @articles.push(article)
+      end
+
+    end
+    it "should return nil if either article does not exist or is not valid" do
+      Article.merge_articles(@articles[0].id, 99).should == nil
+      Article.merge_articles(99, @articles[0].id).should == nil
+      Article.merge_articles(99, 98).should == nil
+      #@articles[0].merge_with(99).should == nil
+    end
+    it "should create a new article with the combined bodies of articles" do
+      merged = Article.merge_articles(@articles[0].id, @articles[1].id)
+      merged.should_not == nil
+      merged.body.should == @articles[0].body + @articles[1].body
+      assert(merged.save)
+    end
+    it "should create a new article with the same author as one of the articles" do
+      merged = Article.merge_articles(@articles[0].id, @articles[1].id)
+      merged.should_not == nil
+      merged.author.should == @articles[0].author
+      assert(merged.save)
+    end
+    it "should create a new article with the same title as one of the articles" do
+      merged = Article.merge_articles(@articles[0].id, @articles[1].id)
+      merged.should_not == nil
+      merged.title.should == @articles[0].title
+      assert(merged.save)
+    end
+    it "should create a new article with the combined comments of both articles" do
+      merged = Article.merge_articles(@articles[0].id, @articles[1].id)
+      merged.should_not == nil
+      merged.comments.should == @articles[0].comments + @articles[1].comments
+      assert(merged.save)
+    end
+  end
 end
 

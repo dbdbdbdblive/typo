@@ -416,6 +416,26 @@ class Article < Content
     user.admin? || user_id == user.id
   end
 
+
+  def self.merge_articles(id1, id2)
+    article1 = Article.find_by_id(id1)
+    article2 = Article.find_by_id(id2)
+    return nil unless article1 and article2 and (article1 != article2)
+
+    #use a copy of ourself as the basis of the new aritcle
+    merged_article = self.copy_with_unique_guid(article1)
+
+    #merge in the relevant fields from the other article
+    merged_article.body += article2.body
+    merged_article.comments += article2.comments
+    #other associations that belong_to article
+    merged_article.categorizations += article2.categorizations
+    merged_article.feedback += article2.feedback
+    merged_article.tags += article2.pings
+    merged_article.resources += article2.resources
+    return merged_article
+  end
+
   protected
 
   def set_published_at
@@ -466,4 +486,26 @@ class Article < Content
     to = to - 1 # pull off 1 second so we don't overlap onto the next day
     return from..to
   end
+
+  #convenience method used by the merge_with action
+  def self.copy_with_unique_guid(article)
+    return nil unless article
+    _copy = article.clone
+    #clone will also copy the guid, but this needs to be unique or it will fail when save is called.
+    #clear out the cloned guid and create a new one
+    _copy.guid = nil
+    _copy.create_guid
+    #note: comments belong_to article, so cloning an article will not copy its
+    #comments; need to explicitly copy the comments, and the
+    #associations will work their magic to associate the _copy with the
+    #comments associated with the original
+    _copy.comments = article.comments
+    #other associations that belong_to article
+    _copy.categorizations = article.categorizations
+    _copy.feedback = article.feedback
+    _copy.tags = article.pings
+    _copy.resources = article.resources
+    _copy
+  end
+
 end

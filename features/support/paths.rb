@@ -28,6 +28,10 @@ module NavigationHelpers
       #admin_content_path(:action => :edit, :id => id.to_s)
       "/admin/content/edit/#{id}"
 
+    when /^the show page (?:of|for) (.*)$/
+      article = Article.find_by_title($1)
+      article.permalink_url
+
     else
       begin
         page_name =~ /^the (.*) page$/

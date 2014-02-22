@@ -47,7 +47,7 @@ class Admin::ContentController < Admin::BaseController
       return
     end
     merged_article = Article.merge_articles(@article1.id, @article2.id)
-
+  
     if merged_article.save
       Article.destroy([@article1.id, @article2.id])
       flash[:notice] =_("The articles were merged into a new article")

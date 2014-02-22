@@ -32,7 +32,10 @@ end
 Given /^the following articles exist:$/ do |articles_table|
   articles_table.hashes.each do |article|
     user = User.find_by_name(article['user_name'])
-    Article.create!(:type=>article['type'], :author=>user.name, :user_id=>user.id, :title=>article['title'], :body=>article['body'], :state=>article['state'])  
+    _article = Article.create!(:type=>article['type'], :author=>user.name, :user_id=>user.id, :title=>article['title'], :body=>article['body'], :state=>article['state'])
+    if article['comment']    
+      Comment.create!(:body=>article['comment'], :user_id=>user.id, :article_id=>_article.id, :author=>user.name)
+    end
   end
 end
 
@@ -44,6 +47,19 @@ end
 When /^(?:|I )fill in "(.+)" with the ID of ([^"]*)$/ do |field, article_title|
   article = Article.find_by_title(article_title)
   fill_in(field, :with => article.id)
+end
+
+Then /^(?:|I )should (not )?see the author of ([^"]*) is "([^"]*)"$/ do |exclude, title, author|
+  #xpath matcher: the list of articles should have a table with a row that has
+  #a td with a link with the title, and a sibling td containing the author's name 
+  #note there is another sibling td between them for the category
+  #page.should have_xpath("//tr//td[a[contains(.,#{title})]]/following-sibling::td/following-sibling::td/#{author}")
+  xpath_matcher = page.find(:xpath, "//tr//td[a[contains(.,'#{title}')]]/following-sibling::td/following-sibling::td")
+  if exclude
+    xpath_matcher.should_not have_content("#{author}")
+  else
+    xpath_matcher.should have_content("#{author}")
+  end
 end
 
 #DB Helpers

@@ -62,6 +62,11 @@ Then /^(?:|I )should (not )?see the author of ([^"]*) is "([^"]*)"$/ do |exclude
   end
 end
 
+Then /^I should see the category of ([^"]) is ([^"]+)$/ do |article_name, category_name|
+
+end
+
+
 #DB Helpers
 def _get_users(profile_types)
   users = []

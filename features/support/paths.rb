@@ -32,6 +32,14 @@ module NavigationHelpers
       article = Article.find_by_title($1)
       article.permalink_url
 
+    when /^the (new )?category page(?: of| for )?(.*)?$/
+      if $1
+        "/admin/categories/new"
+      else
+        category = Category.find_by_name($2)
+        "/admin/categories/edit/#{category.id}"
+      end
+
     else
       begin
         page_name =~ /^the (.*) page$/

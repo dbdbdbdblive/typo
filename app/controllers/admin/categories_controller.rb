@@ -25,7 +25,11 @@ class Admin::CategoriesController < Admin::BaseController
 
   def new_or_edit
     @categories = Category.find(:all)
-    @category = Category.find(params[:id])
+#TODO: add get_or_build_category to Category model rather than checking here?
+    @category = Category.find_by_id(params[:id])
+    unless @category
+      @category = Category.new
+    end
     @category.attributes = params[:category]
     if request.post?
       respond_to do |format|
